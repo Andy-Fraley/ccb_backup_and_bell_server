@@ -3,6 +3,7 @@
   apt: name={{ item }} state=latest
   with_items:
   - omxplayer
+  - fonts-freefont-ttf
 
 - name: Generate password for bells user
   local_action: command python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ linux.bells_password }}')"
