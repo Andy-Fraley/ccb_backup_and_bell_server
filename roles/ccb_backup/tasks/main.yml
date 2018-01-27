@@ -1,0 +1,55 @@
+---
+- name: Install Python packages required by ccb_backup
+  pip: name={{ item }} state=latest
+  with_items:
+  - requests
+  - boto3
+  - pytz
+
+- name: Generate password for ccb_backup user
+  local_action: command python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ linux.ccb_backup_password }}')"
+  become: no
+  register: get_ccb_password
+
+- name: Set up ccb_backup user
+  user:
+    name: "{{ linux.ccb_backup_user }}"
+    password: "{{ get_ccb_password.stdout }}"
+    shell: /bin/bash
+
+- debug: msg="Created/updated {{ linux.ccb_backup_user }} user"
+
+- name: Pull ccb_backup repo
+  git: repo=https://github.com/Andy-Fraley/ccb_backup.git version=master
+    dest="/home/{{ linux.ccb_backup_user }}/src/ccb_backup"
+  become: yes
+  become_user: "{{ linux.ccb_backup_user }}"
+
+- name: Create tmp directory under ccb_backup
+  file:
+    path: "/home/{{ linux.ccb_backup_user }}/src/ccb_backup/tmp"
+    state: directory
+    owner: "{{ linux.ccb_backup_user }}"
+    group: "{{ linux.ccb_backup_user }}"
+
+- name: Create ccb_backup.ini under ccb_backup
+  copy:
+    src: ccb_backup.ini.vault
+    dest: "/home/{{ linux.ccb_backup_user }}/src/ccb_backup/ccb_backup.ini"
+    decrypt: yes
+    owner: "{{ linux.ccb_backup_user }}"
+    group: "{{ linux.ccb_backup_user }}"
+
+- name: Set up ccb_backup in cron
+  cron:
+    name: "Run ccb_backup"
+    user: "{{ linux.ccb_backup_user }}"
+    minute: "30"
+    hour: "2"
+    job: "/home/{{ linux.ccb_backup_user }}/src/ccb_backup/ccb_backup.py --post-to-s3 --delete-zip --notification-emails {{ email.notify_target }} > /dev/null 2>&1"
+
+- name: Set up send_mail.py on reboot with email notification of latest IP address
+  cron:
+    name: "Send reboot message including local IP address"
+    special_time: reboot
+    job: "sleep 60 && /home/{{ linux.ccb_backup_user }}/src/ccb_backup/send_email.py --email-address {{ email.notify_target }} --subject \"Ingomar Church Raspberry Pi rebooted\" --body \"crontab @reboot notification\" --include-ip"

@@ -1,0 +1,13 @@
+---
+- name: Update WiFi SSID and password
+  blockinfile:
+    path: /etc/wpa_supplicant/wpa_supplicant.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      network={
+        ssid="{{ wifi.ssid }}"
+        psk="{{ wifi.password }}"
+      }
+
+- name: Cause WiFi interface to reconfigure
+  command: /sbin/wpa_cli -i wlan0 reconfigure

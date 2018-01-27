@@ -1,0 +1,13 @@
+---
+- name: 
+  hosts: all
+  vars:
+    ansible_sudo_pass: "{{ linux.oper_password }}"
+    ansible_user: "{{ linux.oper_user }}"
+    ansible_ssh_pass: "{{ linux.oper_password }}"
+  become: yes
+  roles:
+    - raspbian_prep
+    - ccb_backup
+    - bells
+    - raspbian_wireless

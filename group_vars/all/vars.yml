@@ -1,0 +1,14 @@
+linux:
+  oper_user: pi
+  oper_password: "{{ vault_linux.oper_password }}"
+  ccb_backup_user: ccb_backup
+  ccb_backup_password: "{{ vault_linux.ccb_backup_password }}"
+  bells_user: bells
+  bells_password: "{{ vault_linux.bells_password }}"
+
+email:
+  notify_target: afraley@ingomarchurch.org
+
+wifi:
+  ssid: Fraley
+  password: "{{ vault_wifi.password }}"
