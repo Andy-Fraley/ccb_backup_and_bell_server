@@ -42,7 +42,7 @@
     user: "{{ linux.bells_user }}"
     minute: "0"
     hour: "12"
-    job: "/usr/bin/omxplayer -o local --vol 600 /home/bells/mp3/Westminster12.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/omxplayer --no-osd -o local --vol 600 /home/bells/mp3/Westminster12.mp3 > /dev/null 2>&1"
 
 - name: Set up daily 6pm bells in cron
   cron:
@@ -50,7 +50,7 @@
     user: "{{ linux.bells_user }}"
     minute: "0"
     hour: "18"
-    job: "/usr/bin/omxplayer -o local --vol 600 /home/bells/mp3/Westminster06.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/omxplayer --no-osd -o local --vol 600 /home/bells/mp3/Westminster06.mp3 > /dev/null 2>&1"
 
 - name: Set up Sunday 8:25am bells in cron
   cron:
@@ -59,4 +59,4 @@
     minute: "25"
     hour: "8"
     weekday: "0"
-    job: "/usr/bin/omxplayer -o local --vol 600 /home/bells/mp3/ComeChristians.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/omxplayer --no-osd -o local --vol 600 /home/bells/mp3/ComeChristians.mp3 > /dev/null 2>&1"
