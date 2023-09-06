@@ -21,7 +21,7 @@
     special_time: reboot
     job: "sleep 120 && /usr/bin/ssh -p 2892 -f -N -T -R2893:localhost:22 35.169.217.198"
 
-- name: Create ssh-reverse.service file
+- name: Create reverse-ssh.service file
   copy:
     dest: /etc/systemd/system/reverse-ssh.service
     mode: 644
