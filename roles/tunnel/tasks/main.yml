@@ -1,0 +1,53 @@
+- name: Generate password for deploy2343 user
+  local_action: command python3 -c "from passlib.hash import sha512_crypt; print(sha512_crypt.hash('{{ linux.deploy2343_password }}'))"
+  become: no
+  register: get_deploy2343_password
+
+- name: Create deploy2343 user
+  user:
+    name: "{{ linux.deploy2343_user }}"
+    password: "{{ get_deploy2343_password.stdout }}"
+    shell: /bin/bash
+
+- debug: msg="Created/updated {{ linux.deploy2343_user }} user"
+
+# Guessing that this single tunnel establishment interferes with boot-started service
+# below (reverse-ssh.service), so should probably delete this cron @reboot rule.
+# -ASF 9/6/2023
+- name: Set up cron to reopen tunnel from IUMC AWS EC2 instance after every reboot
+  cron:
+    name: "Reset tunnel in from ingomarchurch.org AWS server (deploy2343 user) at reboot"
+    user: deploy2343
+    special_time: reboot
+    job: "sleep 120 && /usr/bin/ssh -p 2892 -f -N -T -R2893:localhost:22 35.169.217.198"
+
+- name: Create ssh-reverse.service file
+  copy:
+    dest: /etc/systemd/system/reverse-ssh.service
+    mode: 644
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=Reverse SSH connection
+      After=network.target
+      
+      [Service]
+      Type=simple
+      User=deploy2343
+      ExecStart=/usr/bin/ssh -vvv -N -T -o "ServerAliveInterval 10" -o "ExitOnForwardFailure yes" -p 2892 -N -T -R2893:localhost:22 35.169.217.198
+      Restart=always
+      RestartSec=5s
+      
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Start ssh-reverse.service defined above
+  service:
+    name: reverse-ssh
+    state: started
+
+- name: Enable ssh-reverse.service defined above to start at boot
+  service:
+    name: reverse-ssh
+    enabled: yes

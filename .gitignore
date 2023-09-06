@@ -3,6 +3,7 @@ vault.yml
 hosts/*
 bak/*
 *.vault
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

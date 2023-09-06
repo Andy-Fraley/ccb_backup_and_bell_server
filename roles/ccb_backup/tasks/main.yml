@@ -7,7 +7,7 @@
   - pytz
 
 - name: Generate password for ccb_backup user
-  local_action: command python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ linux.ccb_backup_password }}')"
+  local_action: command python3 -c "from passlib.hash import sha512_crypt; print(sha512_crypt.hash('{{ linux.ccb_backup_password }}'))"
   become: no
   register: get_ccb_password
 

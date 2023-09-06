@@ -5,6 +5,8 @@ linux:
   ccb_backup_password: "{{ vault_linux.ccb_backup_password }}"
   bells_user: bells
   bells_password: "{{ vault_linux.bells_password }}"
+  deploy2343_user: deploy2343
+  deploy2343_password: "{{ vault_linux.deploy2343_password }}"
 
 email:
   notify_target: afraley@ingomarchurch.org

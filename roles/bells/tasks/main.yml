@@ -2,36 +2,53 @@
 - name: Install required OS packages
   apt: name={{ item }} state=latest
   with_items:
-  - omxplayer
-  - fonts-freefont-ttf
+  - mpg321
+  - alsa-utils
 
 - name: Generate password for bells user
-  local_action: command python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('{{ linux.bells_password }}')"
+  local_action: command python3 -c "from passlib.hash import sha512_crypt; print(sha512_crypt.hash('{{ linux.bells_password }}'))"
   become: no
   register: get_bells_password
 
-- name: Set up bells user as part of "video" (access to A/V devices) group
+- name: Set up bells user as part of audio group
   user:
     name: "{{ linux.bells_user }}"
     password: "{{ get_bells_password.stdout }}"
     shell: /bin/bash
-    group: video
+    group: audio
 
 - debug: msg="Created/updated {{ linux.bells_user }} user"
 
-- name: Create mp3 directory under ccb_backup
+- name: Install sound driver
+  command: /usr/sbin/modprobe snd-bcm2835
+
+- name: Set sound output device = analog jack
+  command: /usr/bin/amixer cset numid=1
+
+- name: Comment out ALSA front config line
+  lineinfile:
+    path: /usr/share/alsa/alsa.conf
+    regexp: '^pcm.front cards.pcm.front$'
+    line: '#pcm.front cards.pcm.front'
+
+- name: Insert ALSA default config line
+  lineinfile:
+    path: /usr/share/alsa/alsa.conf
+    regexp: '^pcm.front cards.pcm.default$'
+    insertafter: '#pcm.front cards.pcm.front'
+    line: 'pcm.front cards.pcm.default'
+
+- name: Create mp3 directory under /home/bells
   file:
     path: "/home/{{ linux.bells_user }}/mp3"
     state: directory
     owner: "{{ linux.bells_user }}"
-    group: "{{ linux.bells_user }}"
 
 - name: Copy bell audio files
   copy:
     src: "{{ item }}"
     dest: "/home/{{ linux.bells_user }}/mp3/"
     owner: "{{ linux.bells_user }}"
-    group: "{{ linux.bells_user }}"
     mode: 444
   with_fileglob:
   - ../files/*.mp3
@@ -42,7 +59,7 @@
     user: "{{ linux.bells_user }}"
     minute: "0"
     hour: "12"
-    job: "/usr/bin/omxplayer --no-osd --no-keys -o local --vol 900 /home/bells/mp3/Westminster12.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/mpg321 /home/bells/mp3/Westminster12.mp3 > /dev/null 2>&1"
 
 - name: Set up daily 6pm bells in cron
   cron:
@@ -50,7 +67,7 @@
     user: "{{ linux.bells_user }}"
     minute: "0"
     hour: "18"
-    job: "/usr/bin/omxplayer --no-osd --no-keys -o local --vol 900 /home/bells/mp3/Westminster06.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/mpg321 /home/bells/mp3/Westminster06.mp3 > /dev/null 2>&1"
 
 - name: Set up Sunday 8:25am bells in cron
   cron:
@@ -59,4 +76,4 @@
     minute: "25"
     hour: "8"
     weekday: "0"
-    job: "/usr/bin/omxplayer --no-osd --no-keys -o local --vol 900 /home/bells/mp3/ComeChristians.mp3 > /dev/null 2>&1"
+    job: "/usr/bin/mpg321 /home/bells/mp3/ComeChristians.mp3 > /dev/null 2>&1"

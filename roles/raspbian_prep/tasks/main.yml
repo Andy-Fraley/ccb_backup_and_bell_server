@@ -10,11 +10,12 @@
 - name: Install required OS packages
   apt: name={{ item }} state=latest
   with_items:
-  - python-pip
+  - python3-pip
   - git
   - ntp
   - zip
   - aptitude
+  - acl
 
 - name: Update apt cache and upgrade all existing modules
   apt:
@@ -28,6 +29,14 @@
     hour: "4"
     weekday: "3"
     job: "/usr/bin/apt update && /usr/bin/apt upgrade -y"
+
+- name: Set up cron to sync real-time clock
+  cron:
+    name: "Resync hardware clock daily 6am"
+    user: "root"
+    minute: "0"
+    hour: "6"
+    job: "/sbin/hwclock --systohc"
 
 - name: Set the correct timezone
   file:
@@ -54,3 +63,4 @@
   pip: name={{ item }} state=latest
   with_items:
   - pip
+  - passlib
